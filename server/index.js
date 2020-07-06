@@ -1,10 +1,12 @@
 const express = require('express');
 const volleyball = require('volleyball');
 const auth = require('./auth/index.js');
-const bodyParser = require('body-parser'); 
+const client = require('./db/connection.js');
+var coll;
+
 const app = express();
 app.use(volleyball);
-app.use(bodyParser.json());
+app.use(express.json());
 //app.use(cors());
 
 app.get('/', (req, res) => {
@@ -13,7 +15,7 @@ app.get('/', (req, res) => {
     });
 })
 
-app.use('/auth', auth);
+app.use('/auth', auth.router);
 
 function notFound(req, res, next) {
     res.status(404);
@@ -32,7 +34,22 @@ function errorHandler(err, req, res, next) {
 app.use(notFound);
 app.use(errorHandler);
 
+async function connectToDb() {
+    coll = await auth.connectSetup()
+} 
+
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
-    console.log('Listening on port: '   , port);
-}); 
+try {
+    app.listen(port, () => {
+        console.log('Listening on port: '   , port);
+        connectToDb().then(() => {
+            //coll.insertOne({"username": "fufu", "password": "moomoo"});
+        });
+    
+        
+    }); 
+} catch(err) {
+    console.log(err);
+} finally{
+    client.close();
+}
