@@ -42,8 +42,10 @@ const port = process.env.PORT || 5000;
 try {
     app.listen(port, () => {
         console.log('Listening on port: '   , port);
+
         connectToDb().then(() => {
-            //coll.insertOne({"username": "fufu", "password": "moomoo"});
+            module.exports = coll;
+            //coll.insertOne({"username": "mumu", "password": "poopoo"});
         });
     
         
@@ -51,5 +53,7 @@ try {
 } catch(err) {
     console.log(err);
 } finally{
+    console.log('done!');
     client.close();
 }
+

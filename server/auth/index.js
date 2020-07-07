@@ -2,6 +2,8 @@ const express = require('express');
 const router  = express.Router();
 const Joi = require('joi');
 const client = require('../db/connection.js');
+const bcrypt = require('bcryptjs');
+
 var users, collection;
 const dbname = "users";
 
@@ -33,7 +35,9 @@ const schema = Joi.object({
         .required(),
 
     password: Joi.string()
-        .min(10).required(),
+        .trim()
+        .min(10)
+        .required(),
 });
 
 
@@ -45,11 +49,46 @@ router.get('/', (req, res) => {
 
 });
 
-router.post('/signup', (req, res) => {
+router.post('/signup', (req, res, next) => {
     console.log('body', req.body);
+    let bo = req.body;
     const result = Joi.validate(req.body, schema);
+    if(result.error === null) {
+        const dbObject = require('../index.js');
+        console.log('got the object');
+        dbObject.findOne({
+            "username": bo.username
+        }).then((user) => {
+            if(user) {
+                // there is already a user in the db with this username
+                // respond with an error
+                const err = new Error('That username is not OG. Please choose another one');
+                next(err);
+            } else {
+                // hash the password
+                // insert the user with the hashed password
+                bcrypt.hash(bo.password.trim(), 12).then((hashedPass) => {
+                    // create a new user
+                    const newUser = {
+                        username: bo.username,
+                        password: hashedPass
+                    };
+                    dbObject.insertOne(newUser).then((insertedUser) => {
+                        res.json(insertedUser);
+                    });
+                    // insert the new user with the hashed password
+                });
+            }
+            
+        });
+        //dbObject.insertOne({"username": bo.username, "password": bo.password});
+        
+        //make sure username is unique
+    } else {
+        next(result.error);
+    }
 
-    res.json(result);
+    
 });
 
 module.exports = {
