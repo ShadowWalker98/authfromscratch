@@ -2,10 +2,16 @@ const express = require('express');
 const volleyball = require('volleyball');
 const auth = require('./auth/index.js');
 const client = require('./db/connection.js');
+const cors = require('cors');
 var coll;
 
 const app = express();
 app.use(volleyball);
+
+app.use(cors({
+    origin: 'http://localhost:8080',
+}));
+
 app.use(express.json());
 //app.use(cors());
 
@@ -36,7 +42,7 @@ app.use(errorHandler);
 
 async function connectToDb() {
     coll = await auth.connectSetup()
-} 
+}
 
 const port = process.env.PORT || 5000;
 try {
@@ -47,9 +53,9 @@ try {
             module.exports = coll;
             //coll.insertOne({"username": "mumu", "password": "poopoo"});
         });
-    
-        
-    }); 
+
+
+    });
 } catch(err) {
     console.log(err);
 } finally{

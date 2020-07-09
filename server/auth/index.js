@@ -13,7 +13,7 @@ async function connectSetup() {
         await client.connect();
         console.log('Connected');
         users = client.db(dbname)
-        
+
         collection = users.collection("people");
         await collection.createIndex({"username": 1}, {unique: true});
         console.log("Connected to: " + dbname + "!");
@@ -21,8 +21,8 @@ async function connectSetup() {
         //collection.insertOne({"username": "gugu", "password": "booboo"});
     } catch(err) {
         console.log(err);
-    } 
-    
+    }
+
 }
 
 
@@ -63,6 +63,7 @@ router.post('/signup', (req, res, next) => {
                 // there is already a user in the db with this username
                 // respond with an error
                 const err = new Error('That username is not OG. Please choose another one');
+                res.status(409);
                 next(err);
             } else {
                 // hash the password
@@ -79,16 +80,17 @@ router.post('/signup', (req, res, next) => {
                     // insert the new user with the hashed password
                 });
             }
-            
+
         });
         //dbObject.insertOne({"username": bo.username, "password": bo.password});
-        
+
         //make sure username is unique
     } else {
+        res.status(406);
         next(result.error);
     }
 
-    
+
 });
 
 module.exports = {
