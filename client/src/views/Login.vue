@@ -1,15 +1,15 @@
 <template>
   <section>
-    <h1> Sign Up! </h1>
+    <h1>Login</h1>
     <div>
-      <img v-if="signingUp" src="../assets/loadinganim.svg" alt="">
+      <img v-if="loggingIn" src="../assets/loadinganim.svg" alt="">
     </div>
     <div v-if="errorMessage" class="alert alert-secondary" role="alert">
       {{errorMessage}}
     </div>
-    <form v-if="!signingUp" @submit.prevent="signup">
+    <form v-if="!loggingIn" @submit.prevent="login()">
       <div class="form-group">
-        <label for="username">Username</label>
+        <label for="username"></label>
         <input
           v-model="user.username"
           type="text"
@@ -19,10 +19,10 @@
           placeholder="Enter a username"
           required>
         <small id="usernameHelp" class="form-text text-muted">
-         Enter the registered username
+          Enter your registered username
         </small>
       </div>
-      <div class="form-group">
+      <div class="form-group ">
         <label for="password">Password</label>
         <input
           v-model="user.password"
@@ -33,22 +33,18 @@
           placeholder="Password"
           required>
         <small id="passwordHelp" class="form-text text-muted">
-          Must be a minimum of 10 characters
+          Enter the correct password
         </small>
       </div>
-
-      <button type="submit" class="btn btn-primary"> Sign Up </button>
+      <button type="submit" class="btn btn-primary"> Login </button>
     </form>
   </section>
-
 </template>
-
 <script>
 
 import Joi from 'joi';
 
-
-const SIGNUP_URL = 'http://localhost:5000/auth/signup';
+const LOGIN_URL = 'http://localhost:5000/auth/login';
 
 
 const schema = Joi.object({
@@ -62,46 +58,32 @@ const schema = Joi.object({
         .trim()
         .min(10)
         .required(),
-    confirmPassword: Joi.string()
-        .trim()
-        .min(10)
-        .required(),
 });
 
 export default {
   data: () => ({
-    signingUp: false,
+    loggingIn: false,
     errorMessage: '',
     user: {
       username: '',
       password: '',
-      confirmPassword: '',
     },
   }),
-  watch: {
-    user: {
-      handler() {
-        this.errorMessage = '';
-      },
-      deep: true,
-    }
-  },
   methods: {
-    signup() {
+    login() {
       this.errorMessage = '';
       if(this.validUser()) {
-        //send data to server
+        this.loggingIn = true;
         const body = {
           username: this.user.username,
           password: this.user.password,
         };
-        this.signingUp = true;
-        fetch(SIGNUP_URL, {
-          method: 'POST',
-          body: JSON.stringify(body),
+        fetch(LOGIN_URL, {
+          method: "POST",
           headers: {
-            'content-type': 'application/json',
+            "content-type": "application/json",
           },
+          body: JSON.stringify(body),
         }).then((res) => {
           if(res.ok) {
             return res.json();
@@ -109,43 +91,40 @@ export default {
           return res.json().then((error) => {
             throw new Error(error.message);
           });
-        }).then(() => {
+        }).then((result) => {
+          // it worked! valid info entered!
+          // they're logged in!
+          console.log(result)
           setTimeout(() => {
-            this.signingUp = false;
-            this.$router.push('/login');
+            this.loggingIn = false;
+            //this.$router.push('/dashboard');
           }, 1000);
         }).catch((error) => {
           setTimeout(() => {
-            this.signingUp = false;
+            this.loggingIn = false;
             this.errorMessage = error.message;
           }, 1000);
         });
       }
     },
     validUser() {
-      if(this.user.password !== this.user.confirmPassword) {
-        this.errorMessage = "Passwords dont match!"
-        return false;
-      } else {
-        const result = Joi.validate(this.user, schema);
-        if(result.error === null){
-          return true;
-        }
-        if(result.error.message.includes('username')){
-          this.errorMessage = 'Username is invalid'
-        } else {
-          this.errorMessage = 'Password is invalid'
-        }
-        return false;
-
+      const result = Joi.validate(this.user, schema);
+      if(result.error === null){
+        return true;
       }
-    },
+      if(result.error.message.includes('username')){
+        this.errorMessage = 'Username is invalid'
+      } else {
+        this.errorMessage = 'Password is invalid'
+      }
+      return false;
+    }
   }
+
 };
 </script>
 
-
-
 <style>
+
 
 </style>

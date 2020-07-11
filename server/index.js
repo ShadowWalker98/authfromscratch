@@ -3,6 +3,8 @@ const volleyball = require('volleyball');
 const auth = require('./auth/index.js');
 const client = require('./db/connection.js');
 const cors = require('cors');
+require('dotenv').config();
+
 var coll;
 
 const app = express();

@@ -3,6 +3,7 @@ const router  = express.Router();
 const Joi = require('joi');
 const client = require('../db/connection.js');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 var users, collection;
 const dbname = "users";
@@ -90,6 +91,61 @@ router.post('/signup', (req, res, next) => {
         next(result.error);
     }
 
+
+});
+
+function respondError422(res, next) {
+    res.status(422);
+    const error = new Error('Unable to login');
+    next(error);
+}
+
+router.post('/login', (req, res, next) => {
+    const result = Joi.validate(req.body, schema);
+    if(result.error === null) {
+        const dbObject = require('../index.js');
+        dbObject.findOne({
+            "username": req.body.username
+        }).then((user) => {
+            if(user) {
+                //found the user in the db
+                // so the user actually exists
+                // check the password
+                console.log("Comparing...", req.body.password, ' with the hash ', user.password);
+                bcrypt.compare(req.body.password, user.password)
+                .then((result) => {
+                    if(result) {
+                        // right password
+                        const payload = {
+                            _id: user._id,
+                            username: user.username
+                        };
+                        // make the token
+                        jwt.sign(payload, process.env.TOKEN_SECRET, {
+                            expiresIn: '1d',
+                        }, (err, token) => {
+                            if(err) {
+                                respondError422(res, next);
+                            } else {
+                                res.json({
+                                    token
+                                });
+                            }
+                        });
+
+                    } else {
+                        // wrong password
+                        respondError422(res, next);
+                    }
+                });
+            } else {
+                //user not found
+                respondError422(res, next);
+            }
+        });
+    } else {
+        respondError422(res, next);
+    }
 
 });
 
