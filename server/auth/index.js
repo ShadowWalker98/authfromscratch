@@ -6,18 +6,18 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 var users, collection;
-const dbname = "users";
 
 
-async function connectSetup() {
+
+async function connectSetup(name, cname) {
     try {
         await client.connect();
         console.log('Connected');
-        users = client.db(dbname)
+        db = client.db(name)
 
-        collection = users.collection("people");
-        await collection.createIndex({"username": 1}, {unique: true});
-        console.log("Connected to: " + dbname + "!");
+        collection = db.collection(cname);
+        //await collection.createIndex({"username": 1}, {unique: true});
+        console.log("Connected to: " + name + "!");
         return collection;
         //collection.insertOne({"username": "gugu", "password": "booboo"});
     } catch(err) {
@@ -41,6 +41,25 @@ const schema = Joi.object({
         .required(),
 });
 
+function createTokenSendResponse(user, res, next) {
+    const payload = {
+        _id: user._id,
+        username: user.username
+    };
+    // make the token
+    jwt.sign(payload, process.env.TOKEN_SECRET, {
+        expiresIn: '1d',
+    }, (err, token) => {
+        if(err) {
+            respondError422(res, next);
+        } else {
+            console.log(token);
+            res.json({
+                token
+            });
+        }
+    });
+}
 
 
 router.get('/', (req, res) => {
@@ -76,7 +95,9 @@ router.post('/signup', (req, res, next) => {
                         password: hashedPass
                     };
                     dbObject.insertOne(newUser).then((insertedUser) => {
-                        res.json(insertedUser);
+                        createTokenSendResponse(insertedUser.ops[0], res, next);
+                        //res.json(insertedUser);
+                        //console.log(insertedUser.ops[0]._id);
                     });
                     // insert the new user with the hashed password
                 });
@@ -116,22 +137,7 @@ router.post('/login', (req, res, next) => {
                 .then((result) => {
                     if(result) {
                         // right password
-                        const payload = {
-                            _id: user._id,
-                            username: user.username
-                        };
-                        // make the token
-                        jwt.sign(payload, process.env.TOKEN_SECRET, {
-                            expiresIn: '1d',
-                        }, (err, token) => {
-                            if(err) {
-                                respondError422(res, next);
-                            } else {
-                                res.json({
-                                    token
-                                });
-                            }
-                        });
+                        createTokenSendResponse(user, res, next);
 
                     } else {
                         // wrong password

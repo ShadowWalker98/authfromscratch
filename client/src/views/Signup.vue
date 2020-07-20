@@ -22,19 +22,35 @@
          Enter the registered username
         </small>
       </div>
-      <div class="form-group">
-        <label for="password">Password</label>
-        <input
-          v-model="user.password"
-          type="password"
-          class="form-control"
-          id="password"
-          aria-describedby="passwordHelp"
-          placeholder="Password"
-          required>
-        <small id="passwordHelp" class="form-text text-muted">
-          Must be a minimum of 10 characters
-        </small>
+      <div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input
+            v-model="user.password"
+            type="password"
+            class="form-control"
+            id="password"
+            aria-describedby="passwordHelp"
+            placeholder="Password"
+            required>
+          <small id="passwordHelp" class="form-text text-muted">
+            Must be a minimum of 10 characters
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="cpassword">Confirm Password</label>
+          <input
+            v-model="user.confirmPassword"
+            type="password"
+            class="form-control"
+            id="cpassword"
+            aria-describedby="cpasswordHelp"
+            placeholder="Confirm Password"
+            required>
+          <small id="cpasswordHelp" class="form-text text-muted">
+            confirm your password
+          </small>
+        </div>
       </div>
 
       <button type="submit" class="btn btn-primary"> Sign Up </button>
@@ -109,10 +125,13 @@ export default {
           return res.json().then((error) => {
             throw new Error(error.message);
           });
-        }).then(() => {
+        }).then((result) => {
+
+          //console.log(result);
+          localStorage.token = result.token;
           setTimeout(() => {
             this.signingUp = false;
-            this.$router.push('/login');
+            this.$router.push('/dashboard');
           }, 1000);
         }).catch((error) => {
           setTimeout(() => {
